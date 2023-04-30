@@ -3,6 +3,10 @@ package com.rest.webservices.restfulwebservices.user;
 import java.net.URI;
 import java.util.List;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +33,8 @@ public class UserResource {
 		return service.findAllUsers();
 	}
 
+	/* //without HATEOAS
+	
 	// GET /users/{id}
 	@GetMapping("/users/{id}")
 	public User retriveUser(@PathVariable int id) {
@@ -40,6 +46,27 @@ public class UserResource {
 		
 		return user;
 	}
+	
+	*/
+	
+	//with HATEOAS - retriveUser
+	//using EntitiyModal and WebMvcLinkBuilder
+	// to return link for retrive all users in response
+	@GetMapping("/users/{id}")
+	public EntityModel<User> retriveUser(@PathVariable int id){
+		User user = service.findOne(id);
+		
+		if(user == null) {
+			throw new UserNotFoundException("id : " + id);
+		}
+		
+		EntityModel<User> entityModel = EntityModel.of(user);
+		WebMvcLinkBuilder link = linkTo(methodOn(this.getClass()).retriveAllUsers());
+		entityModel.add(link.withRel("all-users"));
+		
+		return entityModel;
+	}
+	
 
 	// POST /users
 	//@Valid for validation
@@ -62,4 +89,13 @@ public class UserResource {
 		service.deleteById(id);
 	}
 
+	
+	/* HATEOAS - Hypermedia As The Engine Of Application State
+	 * In addition to data can we give links to customer to perform subsequent actions
+	 * 
+	 *  There are 2 implentation Options
+	 *  1. Custom Formats and Implemenattion - Difficult to maintain
+	 *  2. HAL (JSON Hypertext Application Language)
+	 *     Simple format that gives a consistent and easy way to hyperlink between resources in API
+	 */
 }
